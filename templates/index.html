@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Status and Layout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="/static/js/app.js"></script>
+  </head>
+  <body class="h-full bg-gray-100 flex flex-col overflow-y-hidden">
+    <!-- Status Area -->
+    <div id="status-area" class="w-full p-4 text-center text-white font-bold">
+      <!-- The text and background classes will be dynamically added based on the status -->
+      <!-- Example: "Success!" -->
+      <span id="status-message">Status Message Here</span>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="h-full flex-1 flex">
+      <!-- Control Buttons with Anchor Tags -->
+      <div class="w-1/4 border-r border-gray-300 p-4">
+        <!-- Each anchor tag has a different href attribute -->
+        <a href="url1" class="control-button control-link w-full mb-2 p-2 block bg-blue-500 text-white rounded hover:bg-blue-700 text-center"
+          >Link 1</a
+        >
+
+        <a href="url1" class="control-button control-link w-full mb-2 p-2 block bg-blue-500 text-white rounded hover:bg-blue-700 text-center"
+          >Link 2</a
+        >
+
+        <form id="random-users" class="w-full flex flex-col md:flex-row justify-between gap-1 p-2 border border-blue-300 rounded bg-blue-100">
+          <div class="flex flex-col justify-between gap-1">
+            <label for="random-users-number" class="text-xs hidden md:inline-block flex-1">insert number of users to be generated randomly</label>
+            <label for="random-users-number" class="text-xs flex-1 md:hidden">random users number</label>
+            <input
+              type="number"
+              name="random-users-number"
+              id="random-users-number_input"
+              title="random-users-number"
+              placeholder="1-100000, default 50"
+              min="1"
+              max="100000"
+              class="w-full px-2 py-1 border border-gray-300 rounded"
+            />
+          </div>
+          <button type="submit" class="control-button self-center p-2 block bg-blue-500 text-white rounded hover:bg-blue-700 text-center">
+            generate
+          </button>
+        </form>
+      </div>
+
+      <!-- Data Display Column -->
+      <div class="p-4">
+        <div class="overflow-y-auto h-5/6">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50 sticky top-0">
+              <tr>
+                <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Email</th>
+                <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Phone Number</th>
+                <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+                <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody" class="bg-white divide-y divide-gray-200">
+              <tr>
+                <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider bg-green-50">test</td>
+                <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider bg-green-50">test</td>
+                <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">test</td>
+                <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">test</td>
+                <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">test</td>
+                <td class="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">test</td>
+              </tr>
+              <!-- Data rows will be populated here using JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
