@@ -1,22 +1,23 @@
 function updateStatus(status, message = "") {
   const statusArea = document.getElementById("status-area");
   const statusMessage = document.getElementById("status-message");
+  const baseClassList = "w-full p-2 text-center text-white font-bold ";
 
   switch (status) {
     case "success":
-      statusArea.className = "w-full p-4 text-center text-white font-bold bg-green-500";
+      statusArea.className = baseClassList + "bg-green-500";
       statusMessage.textContent = "Success!";
       break;
     case "loading":
-      statusArea.className = "w-full p-4 text-center text-white font-bold bg-yellow-500";
+      statusArea.className = baseClassList + "bg-yellow-500";
       statusMessage.textContent = "Loading...";
       break;
     case "error-retry":
-      statusArea.className = "w-full p-4 text-center text-white font-bold bg-red-500";
+      statusArea.className = baseClassList + "bg-red-500";
       statusMessage.textContent = "Ooops! an error occurred, but hold tight the app will automatically try again.";
       break;
     case "error":
-      statusArea.className = "w-full p-4 text-center text-white font-bold bg-red-500";
+      statusArea.className = baseClassList + "bg-red-500";
       statusMessage.textContent = "Ooops! there was an error, you might want to try again later or contact support.";
       if (message) {
         console.log("@updateStatus --- case: error --- message =", message);
@@ -25,7 +26,7 @@ function updateStatus(status, message = "") {
       console.log("@updateStatus --- case: error --- statusMessage.textContent =", statusMessage.textContent);
       break;
     default:
-      statusArea.className = "w-full p-4 text-center text-white font-bold bg-blue-400";
+      statusArea.className = baseClassList + "bg-blue-400";
       statusMessage.textContent = "Unknown Status";
   }
 }
@@ -161,9 +162,12 @@ document.getElementById("random-users").addEventListener("submit", function (eve
       }
       return response.json();
     })
-    .then((data) => {
-      console.log("@then 2 handler --- response:", data);
-      populateTable(data);
+    .then(({ users, newListName }) => {
+      console.log("@then 2 handler --- response:", newListName);
+      console.log("@then 2 handler --- response:", users);
+      // display list name in the list name area
+      changeListName(newListName);
+      populateTable(users);
       updateStatus("success");
       setButtonsDisabled(false);
     })
@@ -173,9 +177,6 @@ document.getElementById("random-users").addEventListener("submit", function (eve
       setButtonsDisabled(false);
     });
 });
-
-// Add event listeners to the control links on DOMContentLoaded
-document.addEventListener("DOMContentLoaded", () => {});
 
 // Add event listeners to the control links
 document.addEventListener("DOMContentLoaded", () => {
@@ -189,6 +190,11 @@ document.addEventListener("DOMContentLoaded", () => {
   setButtonsDisabled(false); // Initially enable all the buttons
   updateStatus();
 });
+
+function changeListName(newListName) {
+  const listName = document.getElementById("list-name");
+  listName.innerHTML = newListName;
+}
 
 function populateTable(usersData) {
   const tableBody = document.getElementById("tableBody");
@@ -209,3 +215,72 @@ function populateTable(usersData) {
     tableBody.appendChild(row);
   });
 }
+
+const editButton = document.getElementById("list-name-edit-button");
+const listNameArea = document.getElementById("list-name-area");
+const listName = document.getElementById("list-name");
+
+editButton.addEventListener("click", () => {
+  const isEditing = listNameArea.contains(document.querySelector("input#list-name-input"));
+
+  if (!isEditing) {
+    // Change the heading into an input field
+    const input = document.createElement("input");
+    input.type = "text";
+    input.id = "list-name-input";
+    input.className = "text-lg font-bold text-center";
+    input.value = listName.textContent;
+    listNameArea.replaceChild(input, listName);
+
+    // Change the edit icon to a save icon
+    editButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+          <path fill-rule="evenodd" d="M17.707 2.293a1 1 0 010 1.414l-12 12a1 1 0 01-.707.293H3a1 1 0 01-1-1v-3.586a1 1 0 01.293-.707l12-12a1 1 0 011.414 0z" clip-rule="evenodd" />
+          <path fill-rule="evenodd" d="M12.293 2.707a1 1 0 011.414 0l3.586 3.586a1 1 0 010 1.414l-1 1a1 1 0 01-1.414-1.414l.293-.293-1.586-1.586-1.414 1.414 1.586 1.586-.293.293a1 1 0 01-1.414 0l-1-1a1 1 0 010-1.414l1-1a1 1 0 011.414 1.414L15.414 8 14 6.586 12.293 7.293a1 1 0 000 1.414z" clip-rule="evenodd" />
+        </svg>
+      `;
+
+    // Focus the input and select its content
+    input.focus();
+    input.select();
+  } else {
+    // Save the new name when clicking the save button
+    const inputValue = document.querySelector("input#list-name-input").value;
+    // send request to the backend to save the new list name and wait for the response
+    // if the name is ok, replace the old name with the new one
+    // if name is already used the response will contain an error message and the old name will be displayed
+    listName.textContent = inputValue;
+
+    // Replace the input with the updated heading
+    listNameArea.replaceChild(listName, document.querySelector("input#list-name-input"));
+
+    // Change the save icon back to the edit icon
+    editButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-4 w-4">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+          />
+        </svg>
+      `;
+
+    // Now send a request to the backend to save the new list name
+    // Replace `yourEndpointURL` with the actual URL of your backend endpoint
+    fetch("yourEndpointURL", {
+      method: "POST", // or 'PUT' depending on your backend
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ listName: inputValue }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Success:", data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+});

@@ -1,7 +1,8 @@
 import os
-import requests  # Import requests library for POST requests
+import re
 import hashlib
-from flask import Flask, redirect, url_for, make_response,request,render_template,jsonify
+import requests  # Import requests library for POST requests
+from flask import Flask, redirect, url_for, make_response, request, render_template, jsonify
 from dotenv import load_dotenv
 from faker import Faker
 
@@ -9,7 +10,6 @@ load_dotenv()
 fake = Faker("en_US")
 
 app = Flask(__name__)
-
 
 
 # route for the main page to simple welcome page
@@ -23,8 +23,10 @@ def generate():
     CLIENT_ID = os.getenv('CLIENT_ID')
     REDIRECT_URI = os.getenv('REDIRECT_URI')
     # Login URL with client ID, redirect URI, and scope
-    login_url = f"https://accounts.snapchat.com/login/oauth2/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code&scope=snapchat-marketing-api"
+    login_url = f"https://accounts.snapchat.com/login/oauth2/authorize?client_id={
+        CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code&scope=snapchat-marketing-api"
     return redirect(login_url)
+
 
 @app.route("/callback")
 def callback():
@@ -50,13 +52,12 @@ def callback():
         access_token = response.json()["access_token"]
         refresh_token = response.json()["refresh_token"]
         print(f"Access Token: {access_token}\nRefresh Token: {refresh_token}")
-        return f"Access Token: {access_token}<br>Refresh Token: {refresh_token}"  # Example output
+        # Example output
+        return f"Access Token: {access_token}<br>Refresh Token: {refresh_token}"
     else:
         error_message = response.json().get("error_description")
         print(f"Error: {error_message}")
         return f"Error: {error_message}"
-
-
 
 
 def print_emails_file():
@@ -64,22 +65,22 @@ def print_emails_file():
         text = []
         count = 0
         # for line in f:
-            # text += line
-            # text.append(hashlib.sha256(line.strip().lower().encode('utf-8')).hexdigest())
-            
+        # text += line
+        # text.append(hashlib.sha256(line.strip().lower().encode('utf-8')).hexdigest())
+
     # with open("Untitled spreadsheet - Audience_Match_Email_Example.csv", "r") as f:
         # text = f.read().split()
         # print(len(text))
         print("done --- text length: " + str(len(text)))
 
 
-
 def process_file(file):
     try:
         with open(file.filename, "r") as f:
-            with open ("segments/processed_" + file.filename, "a") as f2:
+            with open("segments/processed_" + file.filename, "a") as f2:
                 for line in f:
-                    token = hashlib.sha256(line.strip().lower().encode('utf-8')).hexdigest()
+                    token = hashlib.sha256(
+                        line.strip().lower().encode('utf-8')).hexdigest()
                     f2.write(token + "\n")
     except Exception as e:
         print("@process file --- error: " + str(e))
@@ -98,8 +99,8 @@ def upload():
     if file.filename == "":
         return make_response("No file selected", 400)
 
-    processing_result= process_file(file)
-    if processing_result["processed"] == False:
+    processing_result = process_file(file)
+    if processing_result["processed"] is False:
         return make_response(f"An error occurred while processing the file: {processing_result["error"]}", 500)
 
     access_token = os.getenv("ACCESS_TOKEN")
@@ -120,14 +121,15 @@ def upload():
         return "File sent to Snapchat successfully"
     else:
         return "Error sending file to Snapchat"
-    
+
 
 @app.route("/random-users", methods=["POST"])
 def random_users():
-    number_of_users,input_error = validate_int(request.form.get("random-users-number",50))
-    if input_error:
+    number_of_users, input_error = validate_int(
+        request.form.get("random-users-number", 50))
+    if input_error or number_of_users == None:
         return make_response(input_error, 400)
-    users = []
+    users_list = []
     for i in range(number_of_users):
         user = {
             "email": fake.email(),
@@ -138,31 +140,71 @@ def random_users():
             "notes": fake.text(60),
             "id": i+1,
         }
-        users.append(user)
-    # return the list of users as JSON
-    return make_response(jsonify(users), 200)
+        users_list.append(user)
+        random_list_name = get_new_list_name()
+    # return the list of users and the random list name as JSON
+    return make_response(jsonify({"users":users_list, "newListName":random_list_name}), 200)
 
 
-def validate_int(input):
+def validate_int(value):
     try:
-        if input == '' or input == 0:
-            return 50,None
-        return int(input),None
+        if value == '' or value == 0:
+            return 50, None
+        return int(value), None
     except:
-        return None,"Invalid input. not a valid integer." 
+        return None, "Invalid input. not a valid integer."
+
+
+def get_new_list_name():
+    """
+    Get a new list name by checking the existing list names and generating a new name.
+
+    Returns:
+        str: The new list name.
+    """
+    # check the already existing list names
+    existing_lists = get_directories_names('segments')
+    pattern = r'New List (\d+)'
+    # Extract numbers from directory names that match the 'New List X' format
+    numbers = []
+    for list_name in existing_lists:
+        match = re.match(pattern, list_name)
+        if match:
+            numbers.append(int(match.group(1)))
+    # sort the numbers
+    numbers.sort()
+    next_number = max(numbers,default=0) + 1
+    for i, value in enumerate(numbers,1):
+        if i != value:
+            next_number = i
+            break
+    new_list_name = f"New List {next_number}"
+    return new_list_name
+
+
+def get_directories_names(directory_name):
+    # get all list names from "segments" folder
+    directory_path = os.path.join(app.root_path, directory_name)
+    if os.path.exists(directory_path) and os.path.isdir(directory_path):
+        # List only the directories within the specified directory
+        directories = [d for d in os.listdir(directory_path) if os.path.isdir(os.path.join(directory_path, d))]
+        print("\n@get_directories_names ---- directories: " + str(directories)+"\n")
+        return directories
+    
+    return []
 
 
 def create_emails_file():
     # text = []
     with open("100000_mails.txt", "a") as f:
-    # loop 100000 to create emails file
+        # loop 100000 to create emails file
         for n in range(100000):
             f.write("test" + str(n+1) + "@test.com\n")
             # f.write(hashlib.sha256("test" + str(n+1) + "@test.com".strip().lower().encode('utf-8')).hexdigest() + "\n")
     with open("100000_mails.txt", "r") as f:
         text = f.read().split()
     print("@create emails file ---- done --- text length: " + str(len(text)))
-        
+
 
 print("------- faker -------")
 print(fake.city())
@@ -172,5 +214,3 @@ print(fake.city())
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
