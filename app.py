@@ -1,8 +1,10 @@
 import os
 import re
 import hashlib
+import random
+import time
 import requests  # Import requests library for POST requests
-from flask import Flask, redirect, url_for, make_response, request, render_template, jsonify
+from flask import Flask, redirect, url_for, make_response, request,Response, render_template, jsonify
 from dotenv import load_dotenv
 from faker import Faker
 
@@ -90,6 +92,8 @@ def process_file(file):
     return {"processed": True, "error": None, "filePath": "segments/processed_" + file.filename}
 
 
+
+
 @app.route("/upload", methods=["POST"])
 def upload():
     if 'file' not in request.files:
@@ -123,10 +127,11 @@ def upload():
         return "Error sending file to Snapchat"
 
 
-@app.route("/random-users", methods=["POST"])
-def random_users():
+@app.route("/generate-random-list", methods=["POST"])
+def generate_random_list():
     number_of_users, input_error = validate_int(
         request.form.get("random-users-number", 50))
+    print("@generate_random_list --- number_of_users: " + str(number_of_users))
     if input_error or number_of_users == None:
         return make_response(input_error, 400)
     users_list = []
@@ -141,9 +146,81 @@ def random_users():
             "id": i+1,
         }
         users_list.append(user)
-        random_list_name = get_new_list_name()
-    # return the list of users and the random list name as JSON
-    return make_response(jsonify({"users":users_list, "newListName":random_list_name}), 200)
+    random_segment_name = get_new_segment_name()
+    # random_segment_name = "New Segment"
+    # return the list of users and the random segment name as JSON
+    return make_response(jsonify({"users":users_list, "newSegmentName":random_segment_name}), 200)
+
+
+@app.route("/segments", methods=["GET"])
+def get_segments():
+    directories = get_directories_names('segments')
+    segments = []
+    for directory in directories:
+        segment_name, segment_id = extract_segment_info(directory)
+        segments.append({"segmentName":segment_name, "segmentId":segment_id})
+    return make_response(jsonify(segments), 200)
+
+
+@app.route('/segments/<segment_id>', methods=['GET'])
+def get_segment(segment_id):
+    segment_name = request.args.get('name')
+    segment_directory = compose_segment_directory_name(segment_name, segment_id)
+    # open the data.json file within the segment directory and send back the data and handle possible errors
+    return make_response(jsonify(segment_directory), 200)
+
+
+
+@app.route("/segments", methods=["POST"])
+def create_new_segment():
+    data = request.get_json()
+    if not data :
+        return jsonify({"error": "No data provided"}), 400
+    # Simulate immediate response by sending SSE
+    def generate():
+        print(f"Processing data: {[item for item in data]}")  # Placeholder for processing logic
+        try:
+            yield "data:Processing started\n\n"  # Send initial status
+            time.sleep(2)  # Simulate processing delay
+            yield "data: phase 1\n\n"  # Send initial status
+            time.sleep(2)  # Simulate processing delay
+            yield "data: hang on there\n\n"  # Send initial status
+            if True:
+                raise Exception("error while processing data at phase 2" )
+            time.sleep(2)  # Simulate processing delay
+            # Put your actual processing logic here
+            time.sleep(2)  # Simulate processing time
+            yield "data: Processing completed\n\n"  # Send completion status
+        except Exception as e:
+            yield f"error: {str(e)}\n\n"
+
+    return Response(generate(), mimetype='text/event-stream')
+
+
+def extract_segment_info(directory_name):
+    parts = directory_name.split("+++")
+    if len(parts) == 2 and parts[1].strip():
+        return parts[0].strip(), parts[1].strip()
+    else:
+        return directory_name, "no_id"
+
+
+def compose_segment_directory_name(name, segment_id=None):
+    """
+    Compose a directory name for a segment using the name and ID.
+    
+    Args:
+    name (str): The name of the segment.
+    segment_id (str, optional): The ID of the segment. Defaults to None.
+    
+    Returns:
+    str: The composed directory name.
+    """
+    if segment_id is None:
+        return f"{name} +++ placeholder_for_segment_id"
+    if segment_id == "no_id":
+        return name
+    return f"{name} +++ {segment_id}"
 
 
 def validate_int(value):
@@ -155,42 +232,51 @@ def validate_int(value):
         return None, "Invalid input. not a valid integer."
 
 
-def get_new_list_name():
+def get_new_segment_name():
     """
-    Get a new list name by checking the existing list names and generating a new name.
-
+    Get a temporary new segment name by checking the existing segment names and generating a new name.
+    
     Returns:
-        str: The new list name.
+        str: The new segment name.
     """
-    # check the already existing list names
-    existing_lists = get_directories_names('segments')
-    pattern = r'New List (\d+)'
-    # Extract numbers from directory names that match the 'New List X' format
-    numbers = []
-    for list_name in existing_lists:
-        match = re.match(pattern, list_name)
+    # check the already existing segment names
+    existing_segments = get_directories_names('segments')
+    pattern = r'New Segment (\d+)'
+    # Extract numbers from directory names that match the 'New Segment X' format
+    unique_numbers = set()
+    for segment_name in existing_segments:
+        match = re.match(pattern, segment_name,re.IGNORECASE)
         if match:
-            numbers.append(int(match.group(1)))
-    # sort the numbers
-    numbers.sort()
+            # print("@get_new_segment_name ---- match.group(1): " + str(match.group(1)))
+            unique_numbers.add(int(match.group(1)))
+    # Convert the set back to a segment and sort the numbers
+    numbers = sorted(list(unique_numbers))
     next_number = max(numbers,default=0) + 1
     for i, value in enumerate(numbers,1):
         if i != value:
             next_number = i
             break
-    new_list_name = f"New List {next_number}"
-    return new_list_name
+    new_segment_name = f"New Segment {next_number} +++ placeholder-for-segment-id-{random.randint(10**18, 10**19)}"
+    return new_segment_name
 
 
 def get_directories_names(directory_name):
+    """
+    Get all the directory names from a specified directory.
+    Args:
+        directory_name (str): The name of the directory to get the names from.
+    Returns:
+        list: A list of directory names within the specified directory. If the directory does not exist or is not a directory, an empty list is returned.
+    """
     # get all list names from "segments" folder
     directory_path = os.path.join(app.root_path, directory_name)
+    print("@get_directories_names ---- directory_path: " + str(directory_path))
     if os.path.exists(directory_path) and os.path.isdir(directory_path):
+        print("@get_directories_names ---- directory_path exists ---- if condition passed " )
         # List only the directories within the specified directory
         directories = [d for d in os.listdir(directory_path) if os.path.isdir(os.path.join(directory_path, d))]
-        print("\n@get_directories_names ---- directories: " + str(directories)+"\n")
+        print("@get_directories_names ---- directories: " + str(directories)+"\n")
         return directories
-    
     return []
 
 
@@ -206,8 +292,8 @@ def create_emails_file():
     print("@create emails file ---- done --- text length: " + str(len(text)))
 
 
-print("------- faker -------")
-print(fake.city())
+# print("------- faker -------")
+# print(fake.city())
 
 # print("------- will create emails file -------")
 # create_emails_file()

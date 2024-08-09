@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Status and Layout</title>
+    <title>Snapchat Segments Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="/static/js/app.js"></script>
   </head>
@@ -12,7 +12,8 @@
     <div id="status-area" class="w-full p-4 text-center text-white font-bold">
       <!-- The text and background classes will be dynamically added based on the status -->
       <!-- Example: "Success!" -->
-      <span id="status-message">Status Message Here</span>
+
+      <p id="status-message">Status Message Here</p>
     </div>
 
     <!-- Main Content Area -->
@@ -20,18 +21,42 @@
       <!-- Control Buttons with Anchor Tags -->
       <div class="w-1/4 border-r border-gray-300 p-4">
         <!-- Each anchor tag has a different href attribute -->
-        <a href="url1" class="control-button control-link w-full mb-2 p-2 block bg-blue-500 text-white rounded hover:bg-blue-700 text-center"
-          >Link 1</a
+        <a href="segments" class="control-button control-link w-full mb-2 p-2 block bg-blue-500 text-white rounded hover:bg-blue-700 text-center"
+          >all segments</a
         >
+
+        <form
+          id="load-segment-form"
+          class="w-full flex flex-col md:flex-row justify-between gap-1 p-2 mb-2 border border-blue-300 rounded bg-blue-100"
+        >
+          <div class="flex flex-col justify-between gap-1">
+            <label for="segments-menu" class="text-xs hidden md:inline-block flex-1"
+              >select a segment from this list and press open to load it into the editor</label
+            >
+            <label for="segments-menu" class="text-xs flex-1 md:hidden">select and open a segment</label>
+            <select name="selected-segment" id="segments-menu" class="w-full px-2 py-1 border border-gray-300 rounded text-gray-400">
+              <option value="" disabled selected class="text-gray-300">Select Segment</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            id="open-button"
+            class="control-button self-center min-w-20 p-2 block bg-blue-500 text-white rounded hover:bg-blue-700 text-center"
+          >
+            open
+          </button>
+        </form>
 
         <a href="url1" class="control-button control-link w-full mb-2 p-2 block bg-blue-500 text-white rounded hover:bg-blue-700 text-center"
           >Link 2</a
         >
 
-        <form id="random-users" class="w-full flex flex-col md:flex-row justify-between gap-1 p-2 border border-blue-300 rounded bg-blue-100">
+        <form id="random-users" class="w-full flex flex-col md:flex-row justify-between gap-1 p-2 mb-2 border border-blue-300 rounded bg-blue-100">
           <div class="flex flex-col justify-between gap-1">
-            <label for="random-users-number" class="text-xs hidden md:inline-block flex-1">insert number of users to be generated randomly</label>
-            <label for="random-users-number" class="text-xs flex-1 md:hidden">random users number</label>
+            <label for="random-users-number_input" class="text-xs hidden md:inline-block flex-1"
+              >insert number of users to be generated randomly</label
+            >
+            <label for="random-users-number_input" class="text-xs flex-1 md:hidden">random users number</label>
             <input
               type="number"
               name="random-users-number"
@@ -43,10 +68,24 @@
               class="w-full px-2 py-1 border border-gray-300 rounded"
             />
           </div>
-          <button type="submit" class="control-button self-center p-2 block bg-blue-500 text-white rounded hover:bg-blue-700 text-center">
+          <button type="submit" class="control-button self-center min-w-20 p-2 block bg-blue-500 text-white rounded hover:bg-blue-700 text-center">
             generate
           </button>
         </form>
+
+        <a
+          href="url1"
+          id="save-button"
+          class="control-button control-link w-full mb-2 p-2 block bg-green-500 text-white rounded hover:bg-green-700 text-center"
+          >save changes</a
+        >
+
+        <a
+          href="url1"
+          id="edit-button"
+          class="control-button control-link w-full mb-2 p-2 block bg-blue-500 text-white rounded hover:bg-blue-700 text-center"
+          >edit fields</a
+        >
       </div>
 
       <!-- Data Display Column -->
